@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Indication Map</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div>
+        <label for="center_clock_position">Select Center Clock Position:</label>
+        <select id="center_clock_position">
+            <option value="12">12:00</option>
+            <option value="6">6:00</option>
+        </select>
+        <button onclick="updateChart()">Update Chart</button>
+        <button onclick="exportChart()">Export Chart</button>
+    </div>
+    <div id="chart-container">{{ chart_html|safe }}</div>
+    <script>
+        function updateChart() {
+            var centerClockPosition = parseInt(document.getElementById('center_clock_position').value);
+            var fileData = '{{ file }}';
+
+            fetch('/update_chart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    center_clock_position: centerClockPosition,
+                    file: fileData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var container = document.getElementById('chart-container');
+                container.innerHTML = data.chart_html;
+                Plotly.newPlot(container.getElementsByClassName('plotly-graph-div')[0], data.chart_data.data, data.chart_data.layout);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function exportChart() {
+            var chartDiv = document.getElementById('chart-container').getElementsByClassName('plotly-graph-div')[0];
+            Plotly.downloadImage(chartDiv, {format: 'png', filename: 'indication_map'});
+        }
+    </script>
+</body>
+</html>
